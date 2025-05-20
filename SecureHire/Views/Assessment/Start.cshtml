@@ -1,0 +1,31 @@
+﻿@{
+    ViewBag.Title = "Start Assessment";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-primary mb-4">Live Proctored Assessment</h2>
+
+        <div class="row">
+            <div class="col-md-6 text-center">
+                <video id="video" width="100%" autoplay muted playsinline></video>
+                <p class="mt-3">
+                    <span class="badge bg-warning text-dark">Webcam Monitoring Active</span>
+                </p>
+            </div>
+
+            <div class="col-md-6">
+                <div class="alert alert-secondary" id="statusText">Status: Initializing...</div>
+                <div class="alert alert-info">Warnings: <span id="warningCount">0</span> / 4</div>
+                <div class="alert alert-danger d-none" id="failMessage">❌ You have failed the exam.</div>
+
+                <button class="btn btn-danger mt-3" id="stopBtn" disabled>Stop Monitoring</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/eye-monitor.js"></script>
+}

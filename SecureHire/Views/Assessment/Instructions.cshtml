@@ -1,0 +1,18 @@
+﻿@model CheatingProofInterviewSystem.Models.AssessmentInstructionsViewModel
+
+@{
+    ViewBag.Title = "Assessment Instructions";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-sm p-4">
+        <h2>@Model.Title</h2>
+        <p>@Model.Description</p>
+        <p><strong>Time Limit:</strong> @Model.TimeLimit minutes</p>
+
+        <form method="get" asp-action="Take" asp-route-id="@Model.AssessmentId">
+            <button type="submit" class="btn btn-success">Start Assessment</button>
+        </form>
+    </div>
+</div>

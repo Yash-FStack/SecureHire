@@ -1,0 +1,90 @@
+﻿@model CheatingProofInterviewSystem.Models.AssessmentSessionViewModel
+
+@{
+    ViewBag.Title = "Take Assessment";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@tensorflow/tfjs@3.21.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@tensorflow-models/blazeface"></script>
+    <script src="~/js/monitor.js"></script>
+}
+
+<div class="container mt-4">
+    <h2>@Model.Title</h2>
+
+    <div class="alert alert-warning d-inline-block mb-3">
+        Time Remaining: <strong id="timer"></strong>
+    </div>
+    <div class="alert alert-info d-inline-block ms-3">
+        Warnings: <strong id="warningCount">0</strong> / 4
+    </div>
+    <div class="alert alert-danger d-none mt-3" id="failMessage">
+        ❌ You have failed the exam due to repeated violations.
+    </div>
+    <div class="alert alert-danger d-none mt-3" id="liveReason"></div>
+
+    <!-- Exam Questions -->
+    <form asp-action="Submit" method="post" id="examForm">
+        <input type="hidden" name="AssessmentId" value="@Model.AssessmentId" />
+        <input type="hidden" name="CandidateEmail" value="@User.Identity?.Name" />
+
+        @for (int i = 0; i < Model.Questions.Count; i++)
+        {
+            <div class="mb-4">
+                <label><strong>Q@(i + 1):</strong> @Model.Questions[i].Text</label>
+                <input type="hidden" name="Answers[@i].QuestionId" value="@Model.Questions[i].QuestionId" />
+                <textarea name="Answers[@i].AnswerText" class="form-control" rows="3" required></textarea>
+            </div>
+        }
+
+        <button type="submit" class="btn btn-primary">Submit Assessment</button>
+    </form>
+</div>
+
+<!-- Floating Camera View -->
+<video id="video" autoplay muted playsinline style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    border: 3px solid #007bff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    z-index: 999;
+"></video>
+
+
+    <script src="~/js/eye-monitor.js"></script>
+
+    <script>
+        const timeKey = 'exam_timer';
+
+        let minutes = localStorage.getItem(timeKey)
+            ? parseInt(localStorage.getItem(timeKey))
+            : @Model.TimeLimit;
+
+        let seconds = 0;
+        const timerDisplay = document.getElementById("timer");
+        const form = document.getElementById("examForm");
+
+        const countdown = setInterval(() => {
+            if (seconds === 0) {
+                if (minutes === 0) {
+                    clearInterval(countdown);
+                    form.submit();
+                } else {
+                    minutes--;
+                    seconds = 59;
+                }
+            } else {
+                seconds--;
+            }
+
+            timerDisplay.textContent =
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            localStorage.setItem(timeKey, minutes);
+        }, 1000);
+    </script>
+

@@ -1,0 +1,80 @@
+﻿@{
+    ViewBag.Title = "Candidate Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-primary">👋 Welcome, @User.Identity?.Name</h2>
+
+    <div class="row g-4">
+
+        <!-- Assessment Status -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-start border-primary border-4">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">📝 Assessment</h5>
+                    <p class="card-text">Your technical assessment is ready to begin.</p>
+                    <a href="@Url.Action("Instructions", "Assessment", new { id = 1 })" class="btn btn-outline-primary">
+                        Start Assessment
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interview Schedule -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-start border-success border-4">
+                <div class="card-body">
+                    <h5 class="card-title text-success">📅 Scheduled Interview</h5>
+                    <p class="card-text">Interview scheduled for: <strong>June 5, 2025, 3:00 PM</strong></p>
+                    <a href="@Url.Action("Join", "Interview", new { interviewId = 1 })" class="btn btn-outline-success">
+                        Join Interview
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Identity Verification -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-start border-warning border-4">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">🪪 Identity Verification</h5>
+                    <p class="card-text">Please verify your ID before attempting the interview.</p>
+                    <a href="@Url.Action("VerifyIdentity", "Candidate")" class="btn btn-outline-warning">
+                        Verify Now
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning Info -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-start border-danger border-4">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">⚠️ Proctoring Violations</h5>
+                    <p class="card-text">You have received <strong>0</strong> warnings.</p>
+                    <small class="text-muted">Warnings reset after each session.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines -->
+        <div class="col-12">
+            <div class="card mt-3 shadow-sm border-start border-info border-4">
+                <div class="card-body">
+                    <h5 class="card-title text-info">📜 Exam Guidelines</h5>
+                    <ul class="mb-0">
+                        <li>Always face the camera directly</li>
+                        <li>Do not look away or speak to others</li>
+                        <li>Keep background noise to a minimum</li>
+                        <li>4 warnings = automatic disqualification</li>
+                        <li>Mic and camera must remain active</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    localStorage.setItem("warning_count", 0);
+</script>
