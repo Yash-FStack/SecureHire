@@ -5,107 +5,116 @@ let failMessage = document.getElementById("failMessage");
 let form = document.getElementById("examForm");
 
 const warningKey = "warning_count";
-let warningCount = parseInt(localStorage.getItem(warningKey) || "0");
-warningCountEl.innerText = warningCount;
-
-let faceModel, audioContext, micStream, streamRef;
-let monitoring = true;
 const warningLimit = 4;
-
-let lastEyeContactTime = Date.now();
-let warningIssuedForBreak = false;
 const sustainedBreakThreshold = 5000; // 5 seconds
+const gracePeriod = 3000; // initial grace period
+
+let warningCount = 0;
+let lastEyeContactTime = Date.now();
+let warningIssued = false;
+let monitoring = true;
+let faceModel = null;
+let streamRef = null;
+let startTime = Date.now();
+
+// Clear old data
+localStorage.removeItem(warningKey);
+warningCountEl.innerText = "0";
+
+// Optional debug overlay
+const countdownOverlay = document.createElement('div');
+countdownOverlay.style.position = 'fixed';
+countdownOverlay.style.bottom = '90px';
+countdownOverlay.style.right = '20px';
+countdownOverlay.style.backgroundColor = 'rgba(255, 255, 0, 0.9)';
+countdownOverlay.style.padding = '10px 15px';
+countdownOverlay.style.borderRadius = '8px';
+countdownOverlay.style.fontWeight = 'bold';
+countdownOverlay.style.fontFamily = 'monospace';
+countdownOverlay.style.display = 'none';
+countdownOverlay.style.zIndex = '1000';
+document.body.appendChild(countdownOverlay);
 
 window.onload = async () => {
-    await loadModel();
-    await startMedia();
+    faceModel = await blazeface.load();
+    await startCamera();
     monitorLoop();
 };
 
-async function loadModel() {
-    faceModel = await blazeface.load();
-}
-
-async function startMedia() {
-    streamRef = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+async function startCamera() {
+    streamRef = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = streamRef;
-
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    micStream = audioContext.createMediaStreamSource(streamRef);
 }
 
 function monitorLoop() {
-    const analyser = audioContext.createAnalyser();
-    micStream.connect(analyser);
-    analyser.fftSize = 512;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
     setInterval(async () => {
-        if (!monitoring) return;
+        if (!monitoring || !faceModel) return;
 
-        // Microphone volume check
-        analyser.getByteFrequencyData(dataArray);
-        const avgVolume = dataArray.reduce((a, b) => a + b, 0) / dataArray.length / 100;
-        if (avgVolume > 0.08) {
-            issueWarning("Loud background noise detected");
+        // Wait for grace period
+        if (Date.now() - startTime < gracePeriod) {
+            statusText.innerHTML = `<span class="text-muted">⏳ Initializing...</span>`;
+            return;
         }
 
         const predictions = await faceModel.estimateFaces(video, false);
-
-        if (predictions.length !== 1 || predictions[0]?.probability?.[0] < 0.95) {
-            handleEyeContactBreak("Face not detected");
+        if (predictions.length !== 1 || predictions[0]?.probability?.[0] < 0.60) {
+            handleEyeContactLoss("Face not detected");
             return;
         }
 
         const face = predictions[0];
-        const [rightEye, leftEye, nose, mouth, rightEar, leftEar] = face.landmarks;
+        const [rightEye, leftEye, nose] = face.landmarks;
 
         const eyeAvgY = (rightEye[1] + leftEye[1]) / 2;
         const noseY = nose[1];
         const eyeToNoseY = noseY - eyeAvgY;
 
-        const leftFaceWidth = Math.abs(leftEye[0] - leftEar[0]);
-        const rightFaceWidth = Math.abs(rightEye[0] - rightEar[0]);
-        const eyeLevelDiff = Math.abs(rightEye[1] - leftEye[1]);
+        // Log raw values
+        console.log("eyeToNoseY =", eyeToNoseY);
 
-        const isLookingDown = eyeToNoseY > 35;
-        const isLookingSideways = Math.abs(leftFaceWidth - rightFaceWidth) > 40;
-        const isHeadTilted = eyeLevelDiff > 20;
+        const isLookingDown = eyeToNoseY > 40;
 
-        const isBreakingEyeContact = isLookingDown || isLookingSideways || isHeadTilted;
-
-        if (isBreakingEyeContact) {
-            handleEyeContactBreak("Not maintaining eye contact with the screen");
+        if (isLookingDown) {
+            handleEyeContactLoss("Not maintaining eye contact");
         } else {
-            clearEyeContactBreak();
+            clearEyeContactLoss();
             statusText.innerHTML = `<span class="text-success">🟢 Eye contact maintained</span>`;
+            countdownOverlay.style.display = 'none';
         }
     }, 1000);
 }
 
-function handleEyeContactBreak(reason) {
+function handleEyeContactLoss(reason) {
     const now = Date.now();
+    const elapsed = now - lastEyeContactTime;
 
-    if (!warningIssuedForBreak && now - lastEyeContactTime >= sustainedBreakThreshold) {
+    console.log("Eye contact lost for", (elapsed / 1000).toFixed(1), "seconds");
+
+    // Show countdown overlay
+    countdownOverlay.innerText = `⚠️ Eye contact lost: ${(elapsed / 1000).toFixed(1)}s`;
+    countdownOverlay.style.display = 'block';
+
+    if (!warningIssued && elapsed >= sustainedBreakThreshold) {
         issueWarning(reason);
-        warningIssuedForBreak = true;
+        warningIssued = true;
     }
 
-    statusText.innerHTML = `<span class="text-warning">⚠️ Eye contact lost</span>`;
+    statusText.innerHTML = `<span class="text-warning">⚠️ Not maintaining eye contact</span>`;
 }
 
-function clearEyeContactBreak() {
+function clearEyeContactLoss() {
     lastEyeContactTime = Date.now();
-    warningIssuedForBreak = false;
+    warningIssued = false;
 }
 
 function issueWarning(reason) {
-    clearEyeContactBreak();
+    clearEyeContactLoss();
 
     warningCount++;
     localStorage.setItem(warningKey, warningCount);
     warningCountEl.innerText = warningCount;
     statusText.innerHTML = `<span class="text-danger">🚨 Warning #${warningCount}: ${reason}</span>`;
+    countdownOverlay.style.display = 'none';
 
     fetch('/Assessment/LogViolation', {
         method: 'POST',
@@ -123,8 +132,7 @@ function endExam() {
     localStorage.setItem(warningKey, warningLimit);
 
     if (failMessage) failMessage.classList.remove("d-none");
-    if (streamRef) streamRef.getTracks().forEach(t => t.stop());
-    if (audioContext && audioContext.state !== "closed") audioContext.close();
+    if (streamRef) streamRef.getTracks().forEach(track => track.stop());
 
     setTimeout(() => {
         if (form) form.submit();
