@@ -53,5 +53,14 @@ namespace CheatingProofInterviewSystem.Controllers
             TempData["Message"] = "Assessment submitted successfully.";
             return RedirectToAction("Dashboard", "Candidate");
         }
+
+
+
+        [HttpGet]
+        public IActionResult PreTake()
+        {
+            
+            return View("PreCheck");
+        }
     }
 }

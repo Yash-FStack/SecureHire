@@ -1,0 +1,53 @@
+﻿@{
+    ViewBag.Title = "PreTake";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="precheck-container">
+    <h2>Checking background services...</h2>
+    <div class="loader"></div>
+    <a href="@Url.Action("Start", "Assessment")" class="btn-start">Start</a>
+</div>
+
+<style>
+    .precheck-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .precheck-container h2 {
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+    }
+
+    .loader {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1.5s linear infinite;
+        margin-bottom: 20px;
+    }
+
+
+    .btn-start {
+        display: inline-block;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .btn-start:hover {
+            background-color: #007bff;
+            color: #fff;
+    }
+</style>
