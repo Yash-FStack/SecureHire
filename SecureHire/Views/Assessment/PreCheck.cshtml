@@ -3,12 +3,6 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="precheck-container">
-    <h2>Checking background services...</h2>
-    <div class="loader"></div>
-    <a href="@Url.Action("Start", "Assessment")" class="btn-start">Start</a>
-</div>
-
 <style>
     .precheck-container {
         display: flex;
@@ -20,10 +14,10 @@
         padding: 20px;
     }
 
-    .precheck-container h2 {
-        margin-bottom: 20px;
-        font-size: 1.5rem;
-    }
+        .precheck-container h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
 
     .loader {
         border: 8px solid #f3f3f3;
@@ -46,8 +40,103 @@
         font-size: 1rem;
     }
 
-    .btn-start:hover {
+        .btn-start:hover {
             background-color: #007bff;
             color: #fff;
-    }
+        }
 </style>
+
+<div class="precheck-container">
+    <h2>Checking background services...</h2>
+    <div class="loader"></div>
+    @* <a href="@Url.Action(" Take", "Assessment" )" class="btn-start">Start</a> *@
+</div>
+
+@{
+    ViewBag.Title = "PreTake";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .precheck-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+        padding: 20px;
+    }
+
+        .precheck-container h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+    .loader {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1.5s linear infinite;
+        margin-bottom: 20px;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .btn-start {
+        display: inline-block;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+        .btn-start:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+</style>
+
+<div class="precheck-container">
+    <h2>Checking background services...</h2>
+    <div class="loader"></div>
+    <a href="@Url.Action(" Take", "Assessment" )" class="btn-start">Start</a>
+</div>
+
+@section Scripts {
+<script>
+        setInterval(() => {
+            fetch('/Assessment/CheckProcess')
+            .then(response => {
+                if (!response.ok) {
+                throw new Error("Network response was not ok");
+                }
+                return response.text(); // because it's a plain int, not JSON
+            })
+            .then(text => {
+                const result = parseInt(text, 10); // convert string to integer
+                console.log("ProcessesKilled:", result);
+
+                if (result === 1) {
+                window.location.href = "/Assessment/Take"
+                }
+            })
+            .catch(error => {
+                console.error("Fetch error:", error);
+        });
+
+        }, 3000); // Every 3 seconds
+</script>
+} 
